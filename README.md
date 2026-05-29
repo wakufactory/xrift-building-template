@@ -64,40 +64,6 @@ export const myPlan: BuildingPlan = {
 }
 ```
 
-## 屋根
-
-`roof` を指定すると、plan 内の room 形状に合わせて平面屋根を生成します。L 字や張り出しのある平面では、最大外接矩形ではなく部屋矩形の合成範囲だけを非重複の矩形 roof に分割します。
-
-```ts
-roof: {
-  overhang: 0.35,
-  thickness: 0.16,
-  heightOffset: 0,
-  materialKey: 'roof:flat-concrete',
-}
-```
-
-- `overhang` は各 room 矩形から外側へ張り出す量です。
-- `thickness` は屋根 slab の厚みです。省略時は `slabThickness` を使います。
-- `heightOffset` は `floorHeight` を基準に屋根位置を上下へずらす量です。`0` のとき屋根の中心が建物高さの上端に乗り、厚みの半分が上へはみ出します。正の値で上、負の値で下に移動します。
-- `materialKey` を省略すると `materialKeys.roof`、それもなければ `materialKeys.room.ceiling` を使います。
-- `roof: false` または未指定なら屋根は生成しません。
-
-この plan を表示するには `BuildingWorld` に渡します。
-
-```tsx
-import { BuildingWorld } from './building'
-import { worldBuildingMaterials } from './worldMaterials'
-
-<BuildingWorld
-  plan={myPlan}
-  materials={worldBuildingMaterials}
-  position={[0, 0, 0]}
-/>
-```
-
-現在の `src/worldPlan.tsx` では `plan1` と `plan2` を作り、`Buildings()` の中で 2 つの `BuildingWorld` を別々の高さに配置しています。
-
 ## 座標と向き
 
 plan の `position` と `size` は XZ 平面で指定します。
@@ -343,6 +309,40 @@ function PictureFrame() {
   return <group position={frame.position} rotation={frame.rotation}>{/* mesh */}</group>
 }
 ```
+
+## 屋根
+
+`roof` を指定すると、plan 内の room 形状に合わせて平面屋根を生成します。L 字や張り出しのある平面では、最大外接矩形ではなく部屋矩形の合成範囲だけを非重複の矩形 roof に分割します。
+
+```ts
+roof: {
+  overhang: 0.35,
+  thickness: 0.16,
+  heightOffset: 0,
+  materialKey: 'roof:flat-concrete',
+}
+```
+
+- `overhang` は各 room 矩形から外側へ張り出す量です。
+- `thickness` は屋根 slab の厚みです。省略時は `slabThickness` を使います。
+- `heightOffset` は `floorHeight` を基準に屋根位置を上下へずらす量です。`0` のとき屋根の中心が建物高さの上端に乗り、厚みの半分が上へはみ出します。正の値で上、負の値で下に移動します。
+- `materialKey` を省略すると `materialKeys.roof`、それもなければ `materialKeys.room.ceiling` を使います。
+- `roof: false` または未指定なら屋根は生成しません。
+
+この plan を表示するには `BuildingWorld` に渡します。
+
+```tsx
+import { BuildingWorld } from './building'
+import { worldBuildingMaterials } from './worldMaterials'
+
+<BuildingWorld
+  plan={myPlan}
+  materials={worldBuildingMaterials}
+  position={[0, 0, 0]}
+/>
+```
+
+現在の `src/worldPlan.tsx` では `plan1` と `plan2` を作り、`Buildings()` の中で 2 つの `BuildingWorld` を別々の高さに配置しています。
 
 ## 外部地面
 
