@@ -1,6 +1,10 @@
-# xrift-building-world
+# xrift-building-template
 
-`xrift-building-world` は、コードで書いた `BuildingPlan` から XRift 用の建物を生成する world です。部屋、ドア、窓、面ごとの色や material を plan として書くと、内部で box の instance 描画と Rapier collider に変換されます。
+`xrift-building-world` は、コードで書いた `BuildingPlan` から [XRift](https://xrift.net/) 用の建物を生成する world です。部屋、ドア、窓、面ごとの色や material を plan として書くと、内部で box の instance 描画と Rapier collider に変換されます。
+
+コンセプト的には、部屋のサイズを指定するだけで、壁や床を作ってくれて、窓やドアは相対座標で穴を開ける、というのがコード的に手軽にできるというものです。
+
+BuildingPlanは建物構造とコライダーだけ作って、インテリアや装飾は別途componentを配置するという方針になります。
 
 plan を編集する主なファイルは `src/worldPlan.tsx` です。material の一覧は `src/worldMaterials.ts` にあります。
 
