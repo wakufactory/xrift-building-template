@@ -304,7 +304,7 @@ opening の `offset` は壁ローカル座標です。
 
 壁は、まず壁ローカル 2D 空間の 1 枚の矩形として扱います。
 
-`splitWallSegments()` は、その矩形から opening を順に引きます。1 つの矩形開口を引くと、最大で左、右、下、上の 4 つの壁矩形が残ります。
+`splitWallSegments()` は、その矩形から opening を順に引きます。1 つの矩形開口を引くと、最大で 4 つの壁矩形が残ります。ドアと窓は縦方向優先で上下を連続した box として残し、共有壁開口は従来通り横方向優先で左右を連続した box として残します。
 
 残った矩形は `compileWall()` で world-space の box に戻されます。north/south 壁は X 方向に長く、east/west 壁は Z 方向に長い box になります。
 

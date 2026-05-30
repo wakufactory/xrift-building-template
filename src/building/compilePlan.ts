@@ -8,6 +8,10 @@ type WallSegment = {
   top: number
 }
 
+type WallOpening = WallSegment & {
+  splitAxis: 'horizontal' | 'vertical'
+}
+
 type Rect2D = {
   minX: number
   maxX: number
@@ -607,13 +611,14 @@ function colorToDedupeKey(color: BoxPartColor): string {
 }
 
 // 指定 side の開口だけを取り出し、省略値を補う。
-function normalizeOpenings(openings: OpeningSpec[], side: WallSide, isDoor: boolean): OpeningSpec[] {
+function normalizeOpenings(openings: OpeningSpec[], side: WallSide, isDoor: boolean): (OpeningSpec & { splitAxis: WallOpening['splitAxis'] })[] {
   return openings
     .filter((opening) => opening.side === side)
     .map((opening) => ({
       ...opening,
       bottom: opening.bottom ?? (isDoor ? OPENING_DEFAULTS.doorBottom : OPENING_DEFAULTS.windowBottom),
       height: opening.height ?? (isDoor ? OPENING_DEFAULTS.doorHeight : OPENING_DEFAULTS.windowHeight),
+      splitAxis: 'vertical',
     }))
 }
 
@@ -629,7 +634,7 @@ function compileWall(input: {
   materialKey: string
   color?: BoxPartColor
   surface?: SurfaceSpec
-  openings: OpeningSpec[]
+  openings: (OpeningSpec & { splitAxis?: WallOpening['splitAxis'] })[]
 }): BoxPart[] {
   const { roomId, side, roomCenter, roomSize, wallThickness, bottomY, height, materialKey, color, surface, openings } = input
   const [roomX, roomZ] = roomCenter
@@ -672,7 +677,11 @@ function applySurfaceSpec(part: BoxPart, surface: SurfaceSpec | undefined): BoxP
 }
 
 // 壁全体の矩形から開口を引き、残った壁セグメントを返す。
-function splitWallSegments(wallLength: number, floorHeight: number, openings: OpeningSpec[]): WallSegment[] {
+function splitWallSegments(
+  wallLength: number,
+  floorHeight: number,
+  openings: (OpeningSpec & { splitAxis?: WallOpening['splitAxis'] })[],
+): WallSegment[] {
   // 最初は壁全面を表す 1 枚の矩形から始める。各開口は現在のセグメント
   // 集合から矩形の穴をくり抜き、残った矩形が box instance になる。
   let segments: WallSegment[] = [
@@ -695,6 +704,7 @@ function splitWallSegments(wallLength: number, floorHeight: number, openings: Op
       end: openingEnd,
       bottom: openingBottom,
       top: openingTop,
+      splitAxis: opening.splitAxis ?? 'horizontal',
     }))
   }
 
@@ -702,7 +712,7 @@ function splitWallSegments(wallLength: number, floorHeight: number, openings: Op
 }
 
 // 1 つの壁セグメントから 1 つの開口矩形を差し引く。
-function subtractOpening(segment: WallSegment, opening: WallSegment): WallSegment[] {
+function subtractOpening(segment: WallSegment, opening: WallOpening): WallSegment[] {
   const overlapStart = Math.max(segment.start, opening.start)
   const overlapEnd = Math.min(segment.end, opening.end)
   const overlapBottom = Math.max(segment.bottom, opening.bottom)
@@ -715,7 +725,35 @@ function subtractOpening(segment: WallSegment, opening: WallSegment): WallSegmen
   const pieces: WallSegment[] = []
 
   // 1 つの矩形開口を引くと、最大で 4 つの独立した壁矩形が残る。
-  // 開口の左、右、下、上の各部分。
+  // doors/windows は縦方向を優先し、上下の壁を横に連続した box として残す。
+  if (opening.splitAxis === 'vertical') {
+    if (segment.bottom < overlapBottom) {
+      pieces.push({ ...segment, top: overlapBottom })
+    }
+    if (overlapTop < segment.top) {
+      pieces.push({ ...segment, bottom: overlapTop })
+    }
+    if (segment.start < overlapStart) {
+      pieces.push({
+        start: segment.start,
+        end: overlapStart,
+        bottom: overlapBottom,
+        top: overlapTop,
+      })
+    }
+    if (overlapEnd < segment.end) {
+      pieces.push({
+        start: overlapEnd,
+        end: segment.end,
+        bottom: overlapBottom,
+        top: overlapTop,
+      })
+    }
+
+    return pieces
+  }
+
+  // 共有壁開口は従来通り横方向を優先し、左右の壁を縦に連続した box として残す。
   if (segment.start < overlapStart) {
     pieces.push({ ...segment, end: overlapStart })
   }
